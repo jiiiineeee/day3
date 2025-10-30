@@ -1,0 +1,116 @@
+
+문제: “각 파일의 충돌 마커(<<<<<<<, =======, >>>>>>>)를 제거하고 요구사항을 만족하도록 병합하시오.”
+답안작성: 충돌 마커 제거 후 어떻게 병합할지 코드를 작성하시오
+
+
+문제 1) sleep vs 명시적 대기 (Selenium)
+
+요구사항(PR 가이드): time.sleep을 사용하지 말고 **명시적 대기(WebDriverWait)**를 사용한다. 
+
+파일: tests/test_login.py
+
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+def test_click_login_button(driver):
+    WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.ID, "loginBtn")))
+    driver.find_element(By.ID, "loginBtn").click()
+
+
+문제 2) unittest 수명주기: setUp vs setUpClass
+
+요구사항: 드라이버는 클래스 단위로 1회 생성/종료한다(setUpClass/tearDownClass). 
+
+파일: tests/test_profile_unittest.py
+
+import unittest
+from selenium import webdriver
+
+class TestProfile(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.driver = webdriver.Chrome()
+    
+    @classmethod
+    def tearDownClass(cls):
+        cls.driver.quit()
+
+    def test_open_profile(self):
+        self.driver.get("https://example.com/profile")
+        self.assertIn("Profile", self.driver.title)
+
+
+문제 3) 페이지 오브젝트 로케이터 정책
+
+요구사항: 로케이터는 data-testid 기반 CSS 선택자 사용. 
+
+파일: pages/login_page.py
+
+from selenium.webdriver.common.by import By
+
+class LoginPage:
+    def __init__(self, driver):
+        self.driver = driver
+
+    LOGIN_BTN = (By.CSS_SELECTOR, "[data-testid='login-btn']")
+    def login_button(self):
+        return self.driver.find_element(*self.LOGIN_BTN)
+
+
+
+
+문제 4) 매개변수화: for 루프 vs pytest.mark.parametrize
+
+요구사항: 데이터 주도 테스트는 pytest.mark.parametrize 사용. 
+
+파일: tests/test_price.py
+
+import pytest
+
+prices = [("basic", 10), ("pro", 20), ("enterprise", 30)]
+
+@pytest.mark.parametrize("name,price", prices, ids=[p[0] for p in prices])
+def test_price_tiers(name, price):
+    assert price > 0
+
+
+
+
+
+문제 5) 대기 조건: presence vs visibility
+
+요구사항: 클릭/입력 가능한 요소 대기는 visibility_of_element_located 사용
+
+파일: tests/test_search.py
+
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+def test_search_box_visible(driver):
+    el = WebDriverWait(driver, 10).until(
+        EC.visibility_of_element_located((By.CSS_SELECTOR, "[data-testid='q']"))
+    )
+    el.send_keys("selenium\n")
+
+
+    
+
+
+문제 6) unittest vs pytest 어서션 스타일 통일
+
+요구사항: 이 파일은 pytest 스타일 assert로 통일한다. 
+
+파일: tests/test_order_mixed.py
+
+def test_total_price():
+    total = 10 + 5
+    assert total == 15
+
+def test_has_discount():
+    has_discount = True
+    assert has_discount
+
+
